@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.XR.ARFoundation;
 using UnityEngine.InputSystem.Utilities;
+using UnityEngine.UI;
 using Touch = UnityEngine.InputSystem.EnhancedTouch.Touch;
 
 
@@ -14,6 +15,7 @@ public class ARLessons : MonoBehaviour
     [SerializeField] ARPlaneManager PlaneManager;
     [SerializeField] ARPointCloudManager PointCloudManager;
     [SerializeField] ARRaycastManager RaycastManager;
+    [SerializeField] ARCameraManager CameraManager;
     [SerializeField] Transform Robot;
 
     private int planesadded = 0;
@@ -31,7 +33,29 @@ public class ARLessons : MonoBehaviour
     private Transform RobotInstance; 
     private bool robotInstantiated = false;
     
+    private float? averageBrightness;
+    private float? averageColorTemperature;
+    private Color? colorCorrection;
+    
+    [SerializeField]  Light currentLight;
+    [SerializeField]  Image currentImage;
+    
 
+    private void Awake() 
+    {
+        currentLight = GetComponent<Light>();
+    }
+
+    private void OnEnable() 
+    {
+        CameraManager.frameReceived += FrameUpdated;
+    }
+
+    private void OnDisable() 
+    {
+        CameraManager.frameReceived -= FrameUpdated;
+    }
+    
     // Start is called before the first frame update
     void Start()
     {
@@ -40,6 +64,7 @@ public class ARLessons : MonoBehaviour
         PointCloudManager.pointCloudsChanged += Events_points;
         hits = new List<ARRaycastHit>();
         UnityEngine.InputSystem.EnhancedTouch.EnhancedTouchSupport.Enable();
+        
     }
 
     void Events(ARSessionStateChangedEventArgs Event){
@@ -127,6 +152,28 @@ public class ARLessons : MonoBehaviour
             RobotRB.isKinematic = true;
             RobotRB.velocity *= 0;
             RobotRB.angularVelocity *= 0;
+        }
+    }
+
+    private void FrameUpdated(ARCameraFrameEventArgs args)
+    {
+        if(args.lightEstimation.averageBrightness.HasValue)
+        {
+            averageBrightness = args.lightEstimation.averageBrightness.Value;
+            currentLight.intensity = args.lightEstimation.averageBrightness.Value;
+        }
+
+        if(args.lightEstimation.averageColorTemperature.HasValue)
+        {
+            averageColorTemperature = args.lightEstimation.averageColorTemperature.Value;
+            currentLight.colorTemperature = args.lightEstimation.averageColorTemperature.Value;
+            currentImage.color = (Color) args.lightEstimation.colorCorrection;
+        }
+
+        if(args.lightEstimation.colorCorrection.HasValue)
+        {
+            colorCorrection = args.lightEstimation.colorCorrection.Value;
+            currentLight.color = args.lightEstimation.colorCorrection.Value;
         }
     }
 }
