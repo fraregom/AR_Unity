@@ -17,6 +17,8 @@ public class ARLessons : MonoBehaviour
     [SerializeField] ARRaycastManager RaycastManager;
     [SerializeField] ARCameraManager CameraManager;
     [SerializeField] Transform Robot;
+    [SerializeField] Transform BallPrefab;
+    [SerializeField] Camera camara;
 
     private int planesadded = 0;
     private int planesupdated = 0;
@@ -39,23 +41,7 @@ public class ARLessons : MonoBehaviour
     
     [SerializeField]  Light currentLight;
     [SerializeField]  Image currentImage;
-    
 
-    private void Awake() 
-    {
-        currentLight = GetComponent<Light>();
-    }
-
-    private void OnEnable() 
-    {
-        CameraManager.frameReceived += FrameUpdated;
-    }
-
-    private void OnDisable() 
-    {
-        CameraManager.frameReceived -= FrameUpdated;
-    }
-    
     // Start is called before the first frame update
     void Start()
     {
@@ -64,6 +50,7 @@ public class ARLessons : MonoBehaviour
         PointCloudManager.pointCloudsChanged += Events_points;
         hits = new List<ARRaycastHit>();
         UnityEngine.InputSystem.EnhancedTouch.EnhancedTouchSupport.Enable();
+        CameraManager.frameReceived += FrameUpdated;
         
     }
 
@@ -111,9 +98,8 @@ public class ARLessons : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        PlanesText.text = "Planes added: " + planesadded + "\n Planes updated: " + planesupdated + "\n Planes removed: " + planesremoved;
-        PlanesText.text += "\n Points added: " + pointsadded + "\n Points updated: " + pointsupdated + "\n Points removed: " + pointsremoved; 
-        
+        PlanesText.text = $"P: {planesupdated}\n PC: {pointsupdated}";
+
         _touches = Touch.activeTouches;
  
         if (_touches.Count == 1)
@@ -175,5 +161,13 @@ public class ARLessons : MonoBehaviour
             colorCorrection = args.lightEstimation.colorCorrection.Value;
             currentLight.color = args.lightEstimation.colorCorrection.Value;
         }
+    }
+    
+    public void ShootBall()
+    {
+        Transform newBall = Instantiate<Transform>(BallPrefab);
+        newBall.transform.position = camara.transform.position;
+        Rigidbody rb = newBall.GetComponent<Rigidbody>();
+        rb.AddForce(5000 * camara.transform.forward);
     }
 }
